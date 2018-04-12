@@ -31,7 +31,7 @@ struct Point{
     float x, y, z;
 };
 
-int grille; // dimension de la grille (consideree cubique)
+unsigned int grille; // dimension de la grille (consideree cubique)
 
 
 
@@ -60,8 +60,7 @@ int indexation(bool tab[8]) {
 }
 
 // pour tracer la droite naive ??? quel intérêt ???
-int droiteNaive(int x0,int y0,int x1,int a,int b , int u)
-{
+int droiteNaive(int x0,int y0,int x1,int a,int b , int u){
     int r = a*x0-b*y0-u; // équation de la droite naïve
     int x = x0;
     int y = y0;
@@ -93,8 +92,7 @@ int droiteNaive(int x0,int y0,int x1,int a,int b , int u)
  * @return index de la config
  */
 //int calculSommetAllume(int rayon, int centre[3], int x, int y, int z){
-int calculIndexConfig(Sphere sphere, Point point)
-{
+int calculIndexConfig(Sphere sphere, Point point){
     int distance = 0;
     int compteur = 0;
     bool tab[8] = { false,false, false, false, false, false, false, false };
@@ -157,11 +155,10 @@ int calculIndexConfig(Sphere sphere, Point point)
  * @param Cx : coord X du centre de la sphère
  * @param Cy : coord Y du centre de la sphère
  * @param Cz : coord Z du centre de la sphère
- * @return un vector^3 rempli de 0 (ou pas) si le point est dans la sphère
+ * @return un vector3 rempli de 0 (ou pas) si le point est dans la sphère
  */
 //vector<int> distance_PointCentre(int r, int Px,int Py,int Pz,int Cx,int Cy,int Cz)
-vector<vector<vector<int>>> distance_PointCentre(Sphere sphere, unsigned int grille_dim)
-{
+vector<vector<vector<int>>> grille_INTER_sphere(Sphere sphere, unsigned int grille_dim){
     int dist = 0;
 
     // définition d'un tableau à 3 vecteurs_dimensions
@@ -200,10 +197,8 @@ vector<vector<vector<int>>> distance_PointCentre(Sphere sphere, unsigned int gri
     return grille;
 }
 
-//void Sphere(int LOOKUP_table[256][13])
-void writeFiles(int LUT[256][13], int grille_dim, Sphere sphere)
-{
-    Point point = NULL;
+void writeFiles(int LUT[256][13], int grille_dim, Sphere sphere){
+    Point point{};
 
     float x, y, z;
     bool ecrit  = false;
@@ -226,7 +221,10 @@ void writeFiles(int LUT[256][13], int grille_dim, Sphere sphere)
                     int targetIndex = calculIndexConfig(sphere, point);
 
                     for (int col = 0; col < 13; col++){ // parcours de la ligne
-                        x = 0.0; y = 0.0; z = 0.0;
+                        x = 0.0;
+                        y = 0.0;
+                        z = 0.0;
+
                         if(LUT[targetIndex][col] != -1 ){
 
                             // la ligne a été remplie || on n'est pas encore à la fin des valeurs intéressantes
@@ -292,42 +290,57 @@ void affichageLUT(){
 
 int main() {
 
-    // initialisation de la LOOKUP_TABLE (full -1)
+    // ________________________________________________________________________________________________
+    //                              INITIALISATION DES VARIABLES
+
+    // LOOKUP_TABLE
     for (int i = 0; i < 256; i++) {
         for (int j = 0; j < 13; j++) {
             LOOKUP_table[i][j] = -1;
         }
     }
 
-    // initialise tab(bool) à FALSE
+    // Index_reference
     for (int i = 0; i < 256; i++) {
         index_reference[i] = false;
     }
 
-    // creation de la sphere (rayon, centre_x, centre_y, centre_z); // btw ça marche ! :)
+    // sphere
     sphere = {50, 100, 100, 100};
 
     // creation de la grille (cubique)
     grille = 200;
 
+
+    // ________________________________________________________________________________________________
+    //                              FUNCTION EN ELLE-MEME
+
+
     // parcours des configs de base [15][8]
     for (int iter_config_base_ligne = 0; iter_config_base_ligne < 15; iter_config_base_ligne++)
     {
         int tab_TamponTriangles[13] = { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 };
-        bool tab_TamponLUT[13] = { false,false, false, false, false, false, false, false, false, false, false, false, false };
+        bool tab_TamponLUT[13] = { false, false, false, false, false, false, false, false, false, false, false, false, false };
+
         // parcours du tableau des sommets [24][8]
         for (int iter_sommet_ligne = 0; iter_sommet_ligne < 24; iter_sommet_ligne++) // état de rotation du cube
         {
             bool tab_TamponConfBase[8] = {false, false, false, false, false, false, false, false};
-            // parcours en fonction des colonnes des sommets        CONSTRUCTION tab_confBase_TAMPON -> table tampon
+
+            // parcours en fonction des colonnes des sommets        CONSTRUCTION tab_confBase_TAMPON
+            /*
             for(int iter_sommet_colonne = 0; iter_sommet_colonne < 8; iter_sommet_colonne++)
             {
-                if (TABLEAU_configDeBase[iter_config_base_ligne][iter_sommet_colonne]) //
+                if (TABLEAU_configDeBase[iter_config_base_ligne][iter_sommet_colonne] == true)
                 {
-                    tab_TamponConfBase[TABLEAU_sommets[iter_sommet_ligne][iter_sommet_colonne]] = true; //
+                    tab_TamponConfBase[TABLEAU_sommets[iter_sommet_ligne][iter_sommet_colonne]] = true;
                 }
             }
-            // ici, on a récupéré la config de base en fonction de chq ligne du TAB_SOMMET
+            */
+
+            // remplace la for_loop précédente
+            tab_TamponConfBase[8] = static_cast<bool>(TABLEAU_configDeBase[iter_config_base_ligne]); // cast to boolean to be sure we r dealing w/ bool
+            // ici, on a récupéré la config de base en fonction de chq colonne du TAB_SOMMET
 
             // parcours en fonction des colonnes du tableau des aretes
             // le but est d'identifier les triangles associés à la config sur laquelle on travaille
@@ -349,8 +362,8 @@ int main() {
 
 
 
-
-                        if (!index_reference[indexation(tab_TamponConfBase)])
+// remplissage de la LUT
+                        if (index_reference[indexation(tab_TamponConfBase)] == false)
                         {
                             // indique que la ligne n'a toujours pas été remplie dans la LUT à l'index sur lequel on travaille
 
@@ -400,13 +413,11 @@ int main() {
     cin >> grille_z;
  */
 
-    // appelle de la fonction pour savoir si le point est compris dans l'espace de la grille
-    distance_PointCentre(sphere, grille);
+    grille_INTER_sphere(sphere, grille); // un intérêt particulier ??
 
-    // écrit toutes les valeurs calculés de la LookUp Table dans des fichiers textes pour la construction de la sphère dans blender
     writeFiles(LOOKUP_table, grille, sphere);
 
-//    affichageLUT();
+    affichageLUT();
 
     cout << "PROCESS FINALIZED SUCCESSFULLY";
 
