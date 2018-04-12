@@ -12,8 +12,26 @@
 
 using namespace std;
 
+
+// ---------------------------------------------------
+//                  VARIABLES
+// ---------------------------------------------------
 int LOOKUP_table[256][13];
+
 bool index_reference[256];
+
+struct Sphere{
+    int rayon;
+    int centre_x;
+    int centre_y;
+    int centre_z;
+} sphere;
+
+struct Point{
+    float x, y, z;
+};
+
+int grille; // dimension de la grille (consideree cubique)
 
 
 
@@ -65,8 +83,18 @@ int droiteNaive(int x0,int y0,int x1,int a,int b , int u)
 }
 
 
-
-int calculSommetAllume(int r, int c[3], int x, int y, int z){
+/**
+ *
+ * @param r
+ * @param c
+ * @param x
+ * @param y
+ * @param z
+ * @return index de la config
+ */
+//int calculSommetAllume(int rayon, int centre[3], int x, int y, int z){
+int calculIndexConfig(Sphere sphere, Point point)
+{
     int distance = 0;
     int compteur = 0;
     bool tab[8] = { false,false, false, false, false, false, false, false };
@@ -80,10 +108,16 @@ int calculSommetAllume(int r, int c[3], int x, int y, int z){
             for (int k = 0; k < 2; k++) {
 
                 // cast the square-root to an int
-                distance = static_cast<int>(sqrt(pow((x + i) - c[0], 2) + pow((y + j) - c[1], 2) + pow((z + k) - c[2], 2))); // on calcule la dist centre_sphere->sommet
+                // on calcule la dist centre_sphere->sommet
+                distance = static_cast<int>(sqrt(
+                        pow((point.x + i) - sphere.centre_x, 2)
+                        + pow((point.y + j) - sphere.centre_y, 2)
+                        + pow((point.z + k) - sphere.centre_z, 2)
+                        ));
 
-                if (distance <= r)                                                                                      // le sommet est dans le sphère
+                if (distance <= sphere.rayon)
                 {
+                    // le sommet est dans le sphère
                     switch (compteur)
                     {
                         case 0:                         // 1e sommet (0,0,0)
@@ -126,50 +160,50 @@ int calculSommetAllume(int r, int c[3], int x, int y, int z){
  * @return un vector^3 rempli de 0 (ou pas) si le point est dans la sphère
  */
 //vector<int> distance_PointCentre(int r, int Px,int Py,int Pz,int Cx,int Cy,int Cz)
-vector<vector<vector<int>>> distance_PointCentre(int r, int Px,int Py,int Pz,int Cx,int Cy,int Cz)
+vector<vector<vector<int>>> distance_PointCentre(Sphere sphere, unsigned int grille_dim)
 {
-    // définition du centre de la sphère
-    int Sphere[3] = {Cx, Cy, Cz};
     int dist = 0;
 
     // définition d'un tableau à 3 vecteurs_dimensions
     vector<vector<vector<int>>> grille;
-
+//        vector<int> grille;
 //    typedef vector<int> v1d;
 //    typedef vector<v1d> v2d;
 //    typedef vector<v2d> v3d;
 //    v3d grille;
 
-    for (int i = 0; i < Px; i++)
+    grille.resize(grille_dim);
+    for (int i = 0; i < grille_dim; i++)
     {
-        for (int j = 0; j < Py; j++)
+        grille[i].resize(grille_dim);
+        for (int j = 0; j < grille_dim; j++)
         {
-            for (int k = 0; k < Pz; k++)
+            grille[j].resize(grille_dim);
+            for (int k = 0; k < grille_dim; k++)
             {
-                dist = static_cast<int>(sqrt(pow(i - Sphere[0], 2) + pow(j - Sphere[1], 2) + pow(k - Sphere[2], 2)));
+                dist = static_cast<int>(sqrt(pow(i - sphere.centre_x, 2) + pow(j - sphere.centre_y, 2) + pow(k - sphere.centre_z, 2)));
 
-                if (dist <= r) // on est dans le cercle
+                if (dist <= sphere.rayon) // on est dans le cercle
                 {
 //                    grille(i, v2d(j, v1d(k, 0)));
-//                    grille[i][j][k].push_back(0);
-                    grille[i][j][k] = 0;
+                    grille[i][j].push_back(255);
+//                    grille[i][j][k] = 255;
                 }
-//                else
-//                {
-//                    grille.push_back(0);
-//                }
+                else
+                {
+                    grille[i][j].push_back(0);
+//                    grille[i][j][k] = 0;
+                }
             }
         }
     }
     return grille;
 }
 
-void Sphere(int LOOKUP_table[256][13])
+//void Sphere(int LOOKUP_table[256][13])
+void writeFiles(int LUT[256][13], int grille_dim, Sphere sphere)
 {
-    // paramètre de la sphère
-    int centre[3] = {0,0,0}; // 10 x3
-    int rayon = 2; // 10
-    int dist = 0;
+    Point point = NULL;
 
     float x, y, z;
     bool ecrit  = false;
@@ -179,54 +213,59 @@ void Sphere(int LOOKUP_table[256][13])
     ofstream fichierV("MarchingCubes_v.txt", ios::out | ios::trunc);
     ofstream fichierF("MarchingCubes_f.txt", ios::out | ios::trunc);
 
+
     // Cherche tous les points dans l'espace qui sont allumés
     if(fichierV && fichierF)
     {
-        //fichierF << "f";
-        for (float i = 0.0; i < 30.0; i++) { // x
-            for (float j = 0.0; j < 30.0; j++) { // y
-                for (float k = 0.0; k < 30.0; k++) { // z
+        fichierF << "f";
+        for (float i = 0.0; i < 30.0; i++) {            // pour moi c'est pas 30.0 c'est grille_dim
+            for (float j = 0.0; j < 30.0; j++) {        // y
+                for (float k = 0.0; k < 30.0; k++) {    // z
                     ecrit = false;
-                    int ligne = calculSommetAllume(rayon, centre, i, j, k); // Calcule de la ligne dans la lookUpTable en fonction des points allumés
+                    point = {i, j, k};
+                    int targetIndex = calculIndexConfig(sphere, point);
 
-                    for (int l = 0; l < 13; l++){ // Pour chaque valeur de la ligne retrouvé
+                    for (int col = 0; col < 13; col++){ // parcours de la ligne
                         x = 0.0; y = 0.0; z = 0.0;
-                        if(LOOKUP_table[ligne][l] != -1 ){
-                            switch (LOOKUP_table[ligne][l]) // Pour chaque sommet allumés, je calcule la position dans l'espace 3D
+                        if(LUT[targetIndex][col] != -1 ){
+
+                            // la ligne a été remplie || on n'est pas encore à la fin des valeurs intéressantes
+
+                            switch (LUT[targetIndex][col]) // Pour chaque sommet allumés, je calcule la position dans l'espace 3D
                             {
-                                case 0: x = 1.0; y = 0.5;               break;
-                                case 1: x = 0.5;                        break;
-                                case 2: y = 0.5;                        break;
-                                case 3: x = 0.5; y = 1.0;               break;
-                                case 4: x = 1.0; y = 0.5; z += 1.0;     break; //       /!\ +=
-                                case 5: x = 0.5; z = 1.0;               break;
-                                case 6: y = 0.5; z = 1.0;               break;
-                                case 7: x = 0.5; y = 1.0; z = 1.0;      break;
-                                case 8: x = 1.0; y = 1.0; z = 0.5;      break;
-                                case 9: x = 1.0; z = 0.5;               break;
-                                case 10: z = 0.5;                       break;
-                                case 11: y = 1.0; z = 0.5;              break;
-                                default:                                break;
+                                case 0: x = 1.0;    y = 0.5;                break;
+                                case 1: x = 0.5;                            break;
+                                case 2:             y = 0.5;                break;
+                                case 3: x = 0.5;    y = 1.0;                break;
+                                case 4: x = 1.0;    y = 0.5;    z += 1.0;   break; //       /!\ +=
+                                case 5: x = 0.5;                z = 1.0;    break;
+                                case 6:             y = 0.5;    z = 1.0;    break;
+                                case 7: x = 0.5;    y = 1.0;    z = 1.0;    break;
+                                case 8: x = 1.0;    y = 1.0;    z = 0.5;    break;
+                                case 9: x = 1.0;                z = 0.5;    break;
+                                case 10:                        z = 0.5;    break;
+                                case 11:            y = 1.0;    z = 0.5;    break;
+                                default:                                    break;
                             }
-                            //if (l == 3 || l == 6 || l == 9 || l == 12) { // Nouvelle ligne pour une nouvelle face
-                            //	fichierF << " " << lastPoint << "//" << flush; // dernier point
-                            //	fichierF << endl;
-                            //	fichierF << "f";
-                            //}
-                            //cout << l << " " << lookUpTable[sommetAllumesCube(i, j, k, rayon, centre)][l] << i << j << k << endl;
-                            //lastPoint = lookUpTable[ligne][l];
+//                            if (l == 3 || l == 6 || l == 9 || l == 12) { // Nouvelle ligne pour une nouvelle face
+//                            	fichierF << " " << lastPoint << "//" << flush; // dernier point
+//                            	fichierF << endl;
+//                            	fichierF << "f";
+//                            }
+//                            cout << l << " " << lookUpTable[sommetAllumesCube(i, j, k, rayon, centre)][l] << i << j << k << endl;
+//                            lastPoint = lookUpTable[ligne][l];
                             fichierV << "v " << fixed << setprecision(3) << (x + i) / 10 << " " << (y + j) / 10 << " " << (z + k) / 10 << endl;
-                            //fichierF << " " << lookUpTable[ligne][l] << "//" << flush; //fichierF << " " << lookUpTable[ligne][l] << "//" << flush;
+//                            fichierF << " " << lookUpTable[ligne][l] << "//" << flush; //fichierF << " " << lookUpTable[ligne][l] << "//" << flush;
                             compteur++;
                             ecrit = true;
                         }
 
                     }
 //                    if (sommetAllumesCube(i, j, k, rayon, centre) != 0 && ecrit == true) {
-                    //	fichierF << " " << lastPoint << "//" << flush; // dernier point
-                    //	fichierF << endl;
-                    //	fichierF << "f";
-                    //}
+//                    	fichierF << " " << lastPoint << "//" << flush; // dernier point
+//                    	fichierF << endl;
+//                    	fichierF << "f";
+//                    }
                 }
             }
         }
@@ -236,9 +275,20 @@ void Sphere(int LOOKUP_table[256][13])
     }
 }
 
+void affichageLUT(){
+    for(int i = 0; i < 256; i++){
+        cout << i << "-> \t";
+        for (int j = 0; j < 13; j++){
+            cout << LOOKUP_table[i][j] << "\t";
+        }
+        cout << endl;
+    }
+}
+
 // ==========================================================================================================================================
 //                                                                                                                          MAIN
 // ==========================================================================================================================================
+// on manipule des 0/1 (0 = false, 1 = true)
 
 int main() {
 
@@ -254,102 +304,113 @@ int main() {
         index_reference[i] = false;
     }
 
+    // creation de la sphere (rayon, centre_x, centre_y, centre_z); // btw ça marche ! :)
+    sphere = {50, 100, 100, 100};
 
-    int tab1[13] = { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 };
-    bool tab2[13] = { false,false, false, false, false, false, false, false, false, false, false, false, false };
+    // creation de la grille (cubique)
+    grille = 200;
 
-    // création d'un tableau tampon pour sauvegarder les valeurs de la ligne de la config de base sur laquelle on se situe
-    bool tab3[8] = {false, false, false, false, false, false, false, false};
-
-
-    // parcours des configs de base
-    for (int iter_config_base_ligne =1; iter_config_base_ligne < 15; iter_config_base_ligne++)
+    // parcours des configs de base [15][8]
+    for (int iter_config_base_ligne = 0; iter_config_base_ligne < 15; iter_config_base_ligne++)
     {
+        int tab_TamponTriangles[13] = { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 };
+        bool tab_TamponLUT[13] = { false,false, false, false, false, false, false, false, false, false, false, false, false };
         // parcours du tableau des sommets [24][8]
-        for (int iter_sommet_ligne = 0; iter_sommet_ligne < 24; iter_sommet_ligne++)
+        for (int iter_sommet_ligne = 0; iter_sommet_ligne < 24; iter_sommet_ligne++) // état de rotation du cube
         {
-            // parcours en fonction des colonnes des sommets        CONSTRUCTION TAB3 -> table tampon
+            bool tab_TamponConfBase[8] = {false, false, false, false, false, false, false, false};
+            // parcours en fonction des colonnes des sommets        CONSTRUCTION tab_confBase_TAMPON -> table tampon
             for(int iter_sommet_colonne = 0; iter_sommet_colonne < 8; iter_sommet_colonne++)
             {
-                if (TABLEAU_configDeBase[iter_sommet_ligne][iter_sommet_colonne]) // si le sommet est allumé
+                if (TABLEAU_configDeBase[iter_config_base_ligne][iter_sommet_colonne]) //
                 {
-                    tab3[TABLEAU_sommets[iter_sommet_ligne][iter_sommet_colonne]] = true; // on stock le truc dans la table_auxiliaire
+                    tab_TamponConfBase[TABLEAU_sommets[iter_sommet_ligne][iter_sommet_colonne]] = true; //
                 }
             }
+            // ici, on a récupéré la config de base en fonction de chq ligne du TAB_SOMMET
 
             // parcours en fonction des colonnes du tableau des aretes
-            // le but est d'identifier les triangles associé à la config sur laquelle on travaille
+            // le but est d'identifier les triangles associés à la config sur laquelle on travaille
+
+
             for (int iter_aretes_colonne = 0; iter_aretes_colonne < 12; iter_aretes_colonne++)
             {
                 if(TABLEAU_triangles[iter_config_base_ligne][iter_aretes_colonne] != -1)  // =  on est pas à la fin de la ligne des triangles
                 {
-                    if(iter_sommet_ligne == 0) // on est sur la 1e ligne du tab_sommets
+                    if(iter_sommet_ligne < 1) // on est sur la 1e ligne du tab_sommets
                     {
-                        tab1[iter_aretes_colonne] = TABLEAU_triangles[iter_config_base_ligne][iter_aretes_colonne];
-                        tab2[iter_aretes_colonne] = true;
+                        // on stock le n° du triangle à la m ligne & col que dans la table sommet
+                        tab_TamponTriangles[iter_aretes_colonne] = TABLEAU_triangles[iter_config_base_ligne][iter_aretes_colonne];
 
-                        // on check que la ligne à l'index_reference calculé sur tab3 est vide
-                        // la config n'a pas encore été fate et ajouté à l'index correspondant
-                        if (index_reference[indexation(tab3)] == false)
+                        // on update, on indique à quelle col la modif vient d'avoir lieu pour que les autres modifs se fassent sur cette même colonne
+                        tab_TamponLUT[iter_aretes_colonne] = true;
+
+
+
+
+
+
+                        if (!index_reference[indexation(tab_TamponConfBase)])
                         {
+                            // indique que la ligne n'a toujours pas été remplie dans la LUT à l'index sur lequel on travaille
+
                             // remplit la LookUp Table à l'index correspondant à la configuration calculée
-                            LOOKUP_table[indexation(tab3)][iter_aretes_colonne] = TABLEAU_triangles[iter_config_base_ligne][iter_aretes_colonne];
+                            LOOKUP_table[indexation(tab_TamponConfBase)][iter_aretes_colonne] = TABLEAU_triangles[iter_config_base_ligne][iter_aretes_colonne];
 
                             // remplit la config inverse au bon index
-                            LOOKUP_table[255 - indexation(tab3)][iter_aretes_colonne] = TABLEAU_triangles[iter_config_base_ligne][iter_aretes_colonne];
+                            LOOKUP_table[255 - indexation(tab_TamponConfBase)][iter_aretes_colonne] = TABLEAU_triangles[iter_config_base_ligne][iter_aretes_colonne];
                         }
 
                     }
-                    else // on a déjà écrit dans la table_sommets
+                    else
                     {
-//                        for (int iter_arete_colonne = 0; iter_arete_colonne < 12; iter_arete_colonne++) { // parcours des arêtes (une seconde fois)
+                        for (int iter_aretes = 0; iter_aretes < 12; iter_aretes++) { // parcours des arêtes (une seconde fois)
 
-                        if (TABLEAU_aretes[iter_sommet_ligne - 1][iter_aretes_colonne] == tab1[iter_aretes_colonne] && tab2[iter_aretes_colonne] == true)
-                        {
-                            tab1[iter_aretes_colonne] = TABLEAU_aretes[iter_sommet_ligne][iter_aretes_colonne];
-                            tab2[iter_aretes_colonne] = false;
-
-                            if (index_reference[indexation(tab3)] == false)
+                            if (TABLEAU_aretes[iter_sommet_ligne - 1][iter_aretes] == tab_TamponTriangles[iter_aretes_colonne]
+                                && tab_TamponLUT[iter_aretes_colonne])
                             {
-                                LOOKUP_table[indexation(tab3)][iter_aretes_colonne] = TABLEAU_aretes[iter_sommet_ligne][iter_aretes_colonne];
-                                LOOKUP_table[255 - indexation(tab3)][iter_aretes_colonne] = TABLEAU_aretes[iter_sommet_ligne][iter_aretes_colonne];
+                                tab_TamponTriangles[iter_aretes_colonne] = TABLEAU_aretes[iter_sommet_ligne][iter_aretes];
+                                tab_TamponLUT[iter_aretes_colonne] = false;
+
+                                if (!index_reference[indexation(tab_TamponConfBase)])
+                                {
+                                    LOOKUP_table[indexation(tab_TamponConfBase)][iter_aretes_colonne] = TABLEAU_aretes[iter_sommet_ligne][iter_aretes];
+                                    LOOKUP_table[255 - indexation(tab_TamponConfBase)][iter_aretes_colonne] = TABLEAU_aretes[iter_sommet_ligne][iter_aretes];
+                                }
                             }
-
-//                            }
                         }
-                        // INCOMPRIS
-                        tab2[iter_aretes_colonne] = true;
+                        tab_TamponLUT[iter_aretes_colonne] = true;
                     }
-
                 }
             }
             // on passe la ligne de l'index correspondant à la config traité à true, ce cas a été traité et ne devra plus l'être
-            index_reference[indexation(tab3)]=true;
-
+            index_reference[indexation(tab_TamponConfBase)]=true;
         }
     }
-    int rayon, grille_x, grille_y, grille_z, c_x, c_y, c_z;
-
-    // initule car déjà demandé dans la fonction sphere()
-//    cout << "Rentrer le rayon de la sphère : " << endl;
-//    cin >> rayon;
-//    cout << "Rentrer le centre de la sphère : " << endl;
-//    cin >> c_x;
-//    cin >> c_y;
-//    cin >> c_z;
-//    cout << "Rentrer la taille de la grille : " << endl;
-//    cin >> grille_x;
-//    cin >> grille_y;
-//    cin >> grille_z;
+/*
+    cout << "Rentrer le rayon de la sphère : " << endl;
+    cin >> rayon;
+    cout << "Rentrer le centre de la sphère : " << endl;
+    cin >> c_x;
+    cin >> c_y;
+    cin >> c_z;
+    cout << "Rentrer la taille de la grille : " << endl;
+    cin >> grille_x;
+    cin >> grille_y;
+    cin >> grille_z;
+ */
 
     // appelle de la fonction pour savoir si le point est compris dans l'espace de la grille
-    distance_PointCentre(rayon, grille_x, grille_y, grille_z, c_x, c_y, c_z);
+    distance_PointCentre(sphere, grille);
 
     // écrit toutes les valeurs calculés de la LookUp Table dans des fichiers textes pour la construction de la sphère dans blender
-    // Sphere(LOOKUP_table);
-    cout << "Notre LookUp Table : " << LOOKUP_table << endl;
+    writeFiles(LOOKUP_table, grille, sphere);
+
+//    affichageLUT();
+
+    cout << "PROCESS FINALIZED SUCCESSFULLY";
 
     return EXIT_SUCCESS;
 
-//    return 0;
+
 }

@@ -58,21 +58,21 @@ static int TABLEAU_aretes[24][12]{
 
 // Table avec identification du sommet allum�
 bool TABLEAU_configDeBase [15][8]{
-        {FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE},
-        {TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE},
-        {TRUE,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE},
-        {TRUE,FALSE,FALSE,FALSE,FALSE,TRUE,FALSE,FALSE},
-        {TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,FALSE},
-        {TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE},
-        {TRUE,TRUE,FALSE,FALSE,FALSE,FALSE,TRUE,FALSE},
-        {TRUE,FALSE,FALSE,FALSE,FALSE,TRUE,FALSE,TRUE},
-        {TRUE,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,FALSE},
-        {TRUE,TRUE,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE},
-        {TRUE,TRUE,FALSE,FALSE,FALSE,FALSE,TRUE,TRUE},
-        {TRUE,TRUE,FALSE,TRUE,FALSE,TRUE,FALSE,FALSE},
-        {TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,FALSE,TRUE},
-        {TRUE,FALSE,TRUE,FALSE,FALSE,TRUE,FALSE,TRUE},
-        {TRUE,TRUE,FALSE,TRUE,FALSE,FALSE,FALSE,TRUE}
+        { false,	false,	false,	false,	false,	false,	false,	false },
+        { false,	false,	false,	true,	false,	false,	false,	false },
+        { false,	false,	true,	true,	false,	false,	false,	false },
+        { false,	false,	false,	true,	false,	false,	true,	false },
+        { true,		true,	true,	false,	false,	false,	false,	false },
+        { true,		true,	true,	true,	false,	false,	false,	false },
+        { true,		true,	true,	false,	false,	false,	false,	true },
+        { false,	true,	false,	true,	true,	false,	true,	false },
+        { true,		true,	false,	true,	true,	false,	false,	false },
+        { true,		true,	true,	false,	true,	false,	false,	false },
+        { false,	false,	false,	true,	false,	true,	false,	false },
+        { false,	false,	true,	true,	false,	true,	false,	false },
+        { false,	false,	true,	false,	false,	true,	false,	true },
+        { false,	true,	false,	true,	false,	true,	false,	true },
+        { true,	    true,	false,	true,	false,	true,	false,	false }
 };
 
 // table des configurations de triangles possible
